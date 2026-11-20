@@ -24,7 +24,6 @@ test('host and player play a round in real time', async ({ users }) => {
   // ── Host: create a quiz from notes ────────────────────────────────────
   await host.page.goto('/decks/new')
   await host.page.getByLabel('Or paste your notes').fill(NOTES)
-  await host.page.getByLabel('Questions').fill('5')
   await host.page.getByTestId('generate-deck').click()
   await expect(host.page).toHaveURL(/\/decks\//, { timeout: 30_000 })
   // Ready as soon as questions exist (narration/cover continue in background).
