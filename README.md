@@ -101,7 +101,7 @@ npm install
 npx deepspace auth login
 npx deepspace app init        # registers the app and writes DEEPSPACE_APP_ID
 npx deepspace dev start       # local dev
-npm run test:unit             # 27 unit tests incl. full-game simulation
+npm run test:unit             # 29 unit tests incl. full-game simulation
 npx deepspace test run all    # Playwright incl. the two-user game spec
 npx deepspace deploy          # → https://<name>.app.space
 ```
