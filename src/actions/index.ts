@@ -91,11 +91,19 @@ function str(v: unknown, max = 500): string {
   return typeof v === 'string' ? v.trim().slice(0, max) : ''
 }
 
-/** Wrap a handler so unexpected throws become a clean error result. */
+/**
+ * Wrap a handler so unexpected throws become a clean error result, and stamp
+ * successful results with `serverNow` so clients can correct their countdown
+ * for clock skew (timers render from server-epoch fields on the game row).
+ */
 function action(name: string, fn: ActionHandler<Env>): ActionHandler<Env> {
   return async (ctx) => {
     try {
-      return await fn(ctx)
+      const result = await fn(ctx)
+      if (result.success && result.data && typeof result.data === 'object') {
+        return { success: true, data: { ...(result.data as object), serverNow: Date.now() } }
+      }
+      return result
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error(`[action ${name}]`, msg)

@@ -1,5 +1,8 @@
 @import "tailwindcss" source(none);
 @import "./themes.css";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/jetbrains-mono/700.css";
 
 /* Scan local source + SDK components for Tailwind class usage */
 @source "./**/*.{ts,tsx}";
@@ -93,6 +96,12 @@
 
   /* Animations */
   --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
+  --font-display: 'Bricolage Grotesque Variable', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --color-opt-0: #ff6b57;
+  --color-opt-1: #22c3b0;
+  --color-opt-2: #ffb020;
+  --color-opt-3: #8c7bff;
 }
 
 /* Theme override blocks live in `themes.css` — imported above. */
@@ -164,11 +173,11 @@
   }
 
   body {
-    font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Bricolage Grotesque Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    font-size: 14px;
+    font-size: 15px;
     color: var(--color-foreground);
   }
 
@@ -231,4 +240,30 @@
   a, button, [role="button"], input, select, textarea {
     touch-action: manipulation;
   }
+}
+
+/* ── CramClash motion ───────────────────────────────────────────── */
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(.92) translateY(6px); }
+  60% { opacity: 1; transform: scale(1.02) translateY(0); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+@utility animate-pop { animation: pop-in 380ms cubic-bezier(.2,.9,.3,1.2) both; }
+@utility animate-rise { animation: rise 500ms ease-out both; }
+@utility bg-grain {
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(255, 201, 60, 0.10), transparent 40%),
+    radial-gradient(circle at 90% 20%, rgba(140, 123, 255, 0.12), transparent 45%),
+    radial-gradient(circle at 50% 100%, rgba(34, 195, 176, 0.08), transparent 50%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop, .animate-rise { animation: none; }
 }

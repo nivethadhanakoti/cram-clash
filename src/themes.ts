@@ -18,6 +18,11 @@
 
 export const THEMES = [
   {
+    id: 'arcade',
+    label: 'Arcade',
+    description: 'CramClash theme: cream on plum-black with marigold and four answer colors.',
+  },
+  {
     id: 'slate',
     label: 'Slate',
     description: 'Neutral dark placeholder default. Replace with your own theme.',

@@ -44,3 +44,39 @@
   --color-shell: #fafafa;
   --color-shell-panel: #ffffff;
 }
+
+/* Arcade — CramClash's own theme: warm cream type on deep plum-black, a
+ * marigold primary, and four answer colors (each paired with a shape so
+ * the game never relies on color alone). */
+[data-theme="arcade"] {
+  color-scheme: dark;
+  --color-background: #13111c;
+  --color-foreground: #f6f0e4;
+  --color-card: #1d1a29;
+  --color-card-foreground: #f6f0e4;
+  --color-popover: #221e30;
+  --color-popover-foreground: #f6f0e4;
+  --color-primary: #ffc93c;
+  --color-primary-foreground: #1d1503;
+  --color-secondary: #2a2539;
+  --color-secondary-foreground: #f6f0e4;
+  --color-muted: #241f33;
+  --color-muted-foreground: #a8a1bd;
+  --color-accent: #2f2943;
+  --color-accent-foreground: #f6f0e4;
+  --color-destructive: #ff5c6c;
+  --color-destructive-foreground: #ffffff;
+  --color-border: rgba(246, 240, 228, 0.09);
+  --color-input: rgba(246, 240, 228, 0.14);
+  --color-ring: #ffc93c;
+  --radius: 0.9rem;
+  --shadow-card: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 10px 30px -18px rgba(0, 0, 0, 0.7);
+  --shadow-card-hover: 0 1px 0 0 rgba(255, 255, 255, 0.06) inset, 0 16px 40px -18px rgba(0, 0, 0, 0.8);
+  --color-shell: #0f0d17;
+  --color-shell-panel: #1d1a29;
+
+  --color-opt-0: #ff6b57;
+  --color-opt-1: #22c3b0;
+  --color-opt-2: #ffb020;
+  --color-opt-3: #8c7bff;
+}

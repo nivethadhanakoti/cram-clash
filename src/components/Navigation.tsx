@@ -69,9 +69,10 @@ export default function Navigation() {
 
   return (
     <>
-      <nav data-testid="app-navigation" className="border-b border-border bg-background">
+      <nav data-testid="app-navigation" className="border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto flex h-12 max-w-7xl items-center gap-4 px-4">
-          <Link to="/home" className="text-sm font-semibold text-foreground">
+          <Link to="/home" className="flex items-center gap-2 font-display text-base font-extrabold tracking-tight text-foreground">
+            <BrandMark />
             {APP_NAME}
           </Link>
 
@@ -161,5 +162,17 @@ export default function Navigation() {
 
       {showAuthModal && <AuthOverlay onClose={() => setShowAuthModal(false)} />}
     </>
+  )
+}
+
+/** Four answer shapes in a 2×2 grid — the CramClash mark. */
+export function BrandMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={cn('h-6 w-6', className)} aria-hidden>
+      <path d="M5.5 1.5 10 9.5H1Z" fill="var(--color-opt-0)" />
+      <path d="M18.5 1 23 5.5 18.5 10 14 5.5Z" fill="var(--color-opt-1)" />
+      <circle cx="5.5" cy="18.5" r="4.5" fill="var(--color-opt-2)" />
+      <rect x="14" y="14" width="9" height="9" rx="1.5" fill="var(--color-opt-3)" />
+    </svg>
   )
 }
