@@ -250,9 +250,9 @@ function HostView({
 
   if (game.status === 'lobby') {
     return (
-      <div className="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
+      <div className="grid gap-5 grid-cols-1 lg:grid-cols-[1.3fr_1fr]">
         <Panel className="flex flex-col items-center gap-6 py-10 text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-muted-foreground">Join at {window.location.host} with code</p>
+          <p className="break-words text-sm font-semibold uppercase tracking-widest text-muted-foreground">Join at {window.location.host} with code</p>
           <button
             type="button"
             onClick={() => {
@@ -260,7 +260,7 @@ function HostView({
               setCopied(true)
               setTimeout(() => setCopied(false), 1500)
             }}
-            className="group flex items-center gap-3 font-mono text-6xl font-bold tracking-[0.2em] text-primary sm:text-7xl"
+            className="group flex max-w-full items-center gap-2 font-mono text-4xl font-bold tracking-[0.15em] text-primary min-[400px]:text-5xl sm:gap-3 sm:text-6xl sm:tracking-[0.2em] lg:text-7xl"
             data-testid="join-code"
             title="Copy join link"
           >
@@ -286,7 +286,7 @@ function HostView({
               </ul>
             )}
           </div>
-          <div className="mt-6 flex items-center justify-between gap-3">
+          <div className="mt-6 flex flex-wrap-reverse items-center justify-between gap-3">
             {endButton}
             <Button size="lg" className="h-12 rounded-full px-7 text-base" disabled={players.length === 0 || !!busy} onClick={() => run('startGame')} data-testid="start-game">
               {busy === 'startGame' ? <Loader2 className="animate-spin" /> : <Play />} Start game
@@ -306,11 +306,11 @@ function HostView({
   const isLast = game.currentIndex + 1 >= game.totalQuestions
 
   return (
-    <div className="grid gap-5 lg:grid-cols-[1.6fr_1fr]">
+    <div className="grid gap-5 grid-cols-1 lg:grid-cols-[1.6fr_1fr]">
       <Panel className="space-y-5">
         <Countdown startedAt={game.questionStartedAt} endsAt={game.questionEndsAt} frozen={revealed} />
         <p className="font-display text-2xl font-bold leading-snug sm:text-4xl" data-testid="question-prompt">{game.currentPrompt}</p>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {options.map((o, i) => (
             <OptionTile
               key={i}
@@ -553,7 +553,7 @@ function FinalScreen({
         <Podium players={players} />
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_1.3fr]">
+      <div className="grid gap-5 grid-cols-1 lg:grid-cols-[1fr_1.3fr]">
         <div className="space-y-5">
           {me && gameId && <RecapCard gameId={gameId} />}
           <Panel>

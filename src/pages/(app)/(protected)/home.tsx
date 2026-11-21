@@ -64,7 +64,7 @@ export default function HomePage() {
   return (
     <div className="min-h-full bg-grain">
       <div className="mx-auto max-w-6xl space-y-10 px-5 py-8 sm:py-12">
-        <section className="grid gap-5 lg:grid-cols-[1.2fr_1fr]">
+        <section className="grid gap-5 grid-cols-1 lg:grid-cols-[1.2fr_1fr]">
           <Panel className="flex flex-col justify-center">
             <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
               {firstName ? `Ready, ${firstName}?` : 'Ready to play?'}
@@ -79,7 +79,7 @@ export default function HomePage() {
                 autoComplete="off"
                 autoCapitalize="characters"
                 spellCheck={false}
-                className="h-14 flex-1 rounded-2xl border border-input bg-background px-5 text-center font-mono text-2xl font-bold uppercase tracking-[0.35em] outline-none placeholder:text-muted-foreground/40 focus:ring-2 focus:ring-ring"
+                className="h-14 w-full min-w-0 flex-1 rounded-2xl border border-input bg-background px-4 text-center font-mono text-xl font-bold uppercase tracking-[0.25em] sm:text-2xl sm:tracking-[0.35em] outline-none placeholder:text-muted-foreground/40 focus:ring-2 focus:ring-ring"
               />
               <Button type="submit" size="lg" className="h-14 rounded-2xl px-8 text-base" disabled={code.length !== CODE_LENGTH || joining}>
                 {joining ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Join <ArrowRight className="ml-1 h-5 w-5" /></>}
@@ -104,7 +104,7 @@ export default function HomePage() {
         {liveGames.length > 0 && (
           <section>
             <h2 className="mb-3 font-display text-xl font-bold">Games in progress</h2>
-            <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {liveGames.map((g) => (
                 <li key={g.recordId}>
                   <Link
@@ -131,7 +131,7 @@ export default function HomePage() {
             <h2 className="font-display text-xl font-bold">Your quizzes</h2>
           </div>
           {decks.status === 'loading' ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[0, 1, 2].map((i) => (
                 <div key={i} className="h-56 animate-pulse rounded-3xl bg-card" />
               ))}
@@ -145,7 +145,7 @@ export default function HomePage() {
               </Link>
             </Panel>
           ) : (
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="deck-list">
+            <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-testid="deck-list">
               {decks.records.map((d) => (
                 <li key={d.recordId}>
                   <Link
@@ -155,7 +155,7 @@ export default function HomePage() {
                     <DeckCover url={d.data.coverUrl} title={d.data.title || d.data.sourceName} />
                     <div className="space-y-2 p-4">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="line-clamp-2 font-semibold leading-snug">
+                        <p className="line-clamp-2 min-w-0 break-words font-semibold leading-snug">
                           {d.data.title || d.data.sourceName || 'Untitled'}
                         </p>
                         <StatusChip status={d.data.status} />

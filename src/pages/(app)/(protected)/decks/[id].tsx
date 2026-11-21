@@ -96,11 +96,11 @@ export default function DeckPage() {
         </Link>
 
         <Panel className="overflow-hidden p-0 sm:p-0">
-          <div className="grid md:grid-cols-[2fr_3fr]">
+          <div className="grid grid-cols-1 md:grid-cols-[2fr_3fr]">
             <DeckCover url={d.coverUrl} title={d.title || d.sourceName} className="h-full md:aspect-auto" />
             <div className="space-y-4 p-5 sm:p-6">
-              <div className="flex items-start justify-between gap-3">
-                <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-3xl">
+              <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2">
+                <h1 className="break-words font-display text-2xl font-extrabold leading-tight sm:text-3xl">
                   {d.title || 'Writing your quiz…'}
                 </h1>
                 <StatusChip status={d.status} />
@@ -196,7 +196,7 @@ export default function DeckPage() {
                             </Button>
                           )}
                         </div>
-                        <ul className="grid gap-1.5 sm:grid-cols-2">
+                        <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                           {options.map((o, i) => (
                             <li
                               key={i}

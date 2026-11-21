@@ -40,7 +40,7 @@ export default function Landing() {
           </Link>
         </header>
 
-        <main className="mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 pt-8 lg:grid-cols-[1.1fr_1fr] lg:pt-16">
+        <main className="mx-auto grid max-w-6xl items-center gap-12 px-6 pb-20 pt-8 grid-cols-1 lg:grid-cols-[1.1fr_1fr] lg:pt-16">
           <section className="animate-rise">
             <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Study group game night
@@ -79,7 +79,7 @@ export default function Landing() {
             <p className="mb-5 font-display text-2xl font-bold leading-snug">
               Which organelle produces most of the cell’s ATP?
             </p>
-            <div className="grid gap-2.5 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
               {DEMO.map((text, i) => (
                 <div
                   key={text}

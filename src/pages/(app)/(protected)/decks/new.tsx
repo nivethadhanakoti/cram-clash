@@ -215,7 +215,7 @@ export default function NewDeckPage() {
 
           <fieldset>
             <legend className="mb-2 text-sm font-semibold">Difficulty</legend>
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               {DIFFICULTIES.map((d) => (
                 <button
                   key={d.id}
