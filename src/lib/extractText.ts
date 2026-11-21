@@ -16,8 +16,13 @@ function tidy(text: string): string {
 
 async function fromPdf(file: File): Promise<string> {
   const pdfjs = await import('pdfjs-dist')
-  const workerUrl = (await import('pdfjs-dist/build/pdf.worker.min.mjs?url')).default
-  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl
+  // Let Vite bundle the worker as a .js chunk. A `?url` import ships the raw
+  // .mjs file, which the host serves as application/octet-stream; with
+  // `X-Content-Type-Options: nosniff` the browser then refuses to run it.
+  if (!pdfjs.GlobalWorkerOptions.workerPort) {
+    const { default: PdfWorker } = await import('pdfjs-dist/build/pdf.worker.min.mjs?worker')
+    pdfjs.GlobalWorkerOptions.workerPort = new PdfWorker()
+  }
   const task = pdfjs.getDocument({ data: await file.arrayBuffer() })
   const doc = await task.promise
   const pages: string[] = []
