@@ -192,4 +192,6 @@ export interface ReviewItem {
   options: string[]
   correctIndex: number
   explanation: string
+  /** Study-kit concept this question tests, when the deck has a kit. */
+  conceptId?: string
 }

@@ -4,8 +4,11 @@
 Word doc or text, and CramClash writes a multiple-choice quiz grounded only in that
 material. Then it runs a real-time game for your study group: a 6-letter join
 code or QR code, questions read aloud, answers locking in live, and a leaderboard
-that moves at every reveal. When the game ends, each player gets a private AI
-recap built from the exact questions *they* missed.
+that moves at every reveal. The same notes also become a **study kit**: a
+summary, key concepts explained, a printable cheat sheet and a concept map. When
+the game ends, the kit unlocks for every player, and each player gets a private
+AI recap built from the exact questions *they* missed, with each miss linked to
+the concept to review.
 
 Built on the [DeepSpace SDK](https://docs.deep.space) (Cloudflare Workers +
 Durable Objects).
@@ -17,14 +20,17 @@ Durable Objects).
    (pdf.js / mammoth, lazy-loaded), and the original file goes to the user's
    private storage.
 2. **Generate** (background job): Claude writes the questions, which are
-   validated and option-shuffled, then saved. The deck is playable right away,
-   and ElevenLabs narration plus Gemini cover art fill in afterwards. Progress
-   streams live to the deck page.
+   validated and option-shuffled, then saved. The deck is playable right away.
+   In parallel, Claude writes the study kit (and maps every question to the
+   concept it tests), ElevenLabs records narration, and Gemini paints cover
+   art. Progress streams live to the deck page.
 3. **Host** (`/play/CODE`): the host's screen is the presenter view (code, QR,
    live lobby with presence dots), and players' phones are answer pads. Each
    question reveals automatically when everyone has answered or time runs out.
 4. **Results**: podium, full leaderboard, per-question review (your answer vs.
-   correct, with explanation), and a one-click **AI study recap**.
+   correct, with explanation), and a one-click **AI study recap**. The host's
+   **study kit** unlocks for everyone (`/kit/CODE`), and every missed question
+   links straight to its concept ("Review: Electron transport chain →").
 
 ## DeepSpace features used, and why
 
@@ -37,7 +43,7 @@ Durable Objects).
 | **CronRoom** | Hourly cleanup of stale games | Keeps the shared room small; frees join codes. |
 | **PresenceRoom** (`usePresenceRoom`) | Who's connected in the lobby; "host disconnected" banner | Ephemeral, so it doesn't belong in records. |
 | **App files** (`useR2Files`, `appFiles`) | Private source upload; public narration MP3s and cover PNGs | Everyone in a game can play the same audio by URL. |
-| **Integration: Anthropic** | Quiz generation, personal recaps | The core value. |
+| **Integration: Anthropic** | Quiz generation, study kits, personal recaps | The core value. |
 | **Integration: ElevenLabs** | Narrated questions | Party/classroom use: the host screen on a TV reads questions aloud. |
 | **Integration: Gemini image** | Deck cover art | Makes the library scannable. Best-effort and never blocks play. |
 | **Auth** | Sign-in, identity for every action | Built in. |
@@ -68,6 +74,12 @@ On the client side (RBAC **on**):
   the reveal. Scores are computed from them **at reveal**, so the scoreboard
   can't leak correctness mid-question either.
 - `games` and `players` are read-only to clients.
+- `kits` are owner-only. Players get a kit through the `getStudyKit` action,
+  which checks they were in a game on that deck and that the game has
+  finished. "Shared through a finished game" can't be written as a row rule,
+  so an action is the gate, the same pattern as the answer key.
+- Concept-map text from the model reaches Mermaid only as escaped, quoted
+  labels on re-keyed node ids, and Mermaid runs in `strict` mode.
 - No API keys exist in this app. Integrations go through the platform proxy,
   billed to the owner.
 
@@ -75,16 +87,19 @@ On the client side (RBAC **on**):
 
 ```
 src/
-  schemas/            decks, questions, games, players, answers, recaps (+ RBAC)
+  schemas/            decks, questions, kits, games, players, answers, recaps (+ RBAC)
   actions/index.ts    all server actions (the game engine)
   server/ai.ts        Anthropic / ElevenLabs / Gemini calls and prompts
   server/generate-deck.ts   the background generation job
+  server/generate-kit.ts    study kit generation (in that job, or standalone)
+  lib/kit-logic.ts    kit validation, question→concept mapping, Mermaid builder
+  components/kit/     study kit view, concept map, deck-owner kit panel
   cron.ts, jobs.ts    schedule + job dispatch
   lib/game-logic.ts   pure rules: scoring, codes, quiz validation, ranking
   lib/callAction.ts   action client + server-clock offset for countdowns
   lib/extractText.ts  PDF/DOCX/text extraction in the browser
   components/game/    option tiles, countdown, leaderboard, podium, QR
-  pages/              landing, /home, /decks/new, /decks/:id, /play/:code
+  pages/              landing, /home, /decks/new, /decks/:id, /play/:code, /kit/:code
 tests/game.spec.ts    two-user Playwright game (real AI)
 ```
 
@@ -101,7 +116,7 @@ npm install
 npx deepspace auth login
 npx deepspace app init        # registers the app and writes DEEPSPACE_APP_ID
 npx deepspace dev start       # local dev
-npm run test:unit             # 29 unit tests incl. full-game simulation
+npm run test:unit             # 44 unit tests incl. full-game simulation
 npx deepspace test run all    # Playwright incl. the two-user game spec
 npx deepspace deploy          # → https://<name>.app.space
 ```
@@ -121,5 +136,7 @@ The two-user spec needs two test accounts (`npx deepspace test accounts create �
   lift it.
 - **Scanned PDFs** have no text layer; there's no OCR yet, so users paste text
   instead.
+- **The study kit is generated, not edited.** The host can retry a failed kit but
+  can't edit it, and it shares the quiz's 60,000-character notes limit.
 - **Quality control on questions.** The validator drops malformed and duplicate
   items, but the host can't edit a question yet; that would be the next feature.

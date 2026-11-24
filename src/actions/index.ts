@@ -29,6 +29,8 @@ import {
   type ReviewItem,
 } from '../lib/game-logic'
 import { generateRecap, type MissedQuestion } from '../server/ai'
+import { upsertKit } from '../server/generate-kit'
+import { parseKitField, type KitConcept } from '../lib/kit-logic'
 
 const MAX_PLAYERS = 40
 const MAX_ACTIVE_GENERATIONS = 2
@@ -80,6 +82,17 @@ interface AnswerRow extends Record<string, unknown> {
   userId: string
   choice: number
   msTaken: number
+}
+
+interface KitRow extends Record<string, unknown> {
+  deckId: string
+  status: string
+  statusMessage: string
+  summary: string
+  concepts: string
+  cheatSheet: string
+  conceptMap: string
+  questionConcepts: string
 }
 
 // ── helpers ────────────────────────────────────────────────────────────────
@@ -142,6 +155,11 @@ async function loadPlayers(tools: ActionTools, gameId: string) {
   return res.data.records
 }
 
+async function loadKit(tools: ActionTools, deckId: string) {
+  const res = await tools.query<KitRow>('kits', { where: { deckId }, limit: 1 })
+  return res.success ? res.data.records[0] : undefined
+}
+
 async function displayName(tools: ActionTools, userId: string): Promise<string> {
   const res = await tools.get<{ name?: string; email?: string }>('users', userId)
   const data = res.success ? res.data.record.data : {}
@@ -175,12 +193,15 @@ async function openQuestion(tools: ActionTools, gameId: string, game: GameRow, i
 }
 
 async function finishGame(tools: ActionTools, gameId: string, game: GameRow) {
-  const questions = await loadQuestions(tools, game.deckId)
+  const [questions, kit] = await Promise.all([loadQuestions(tools, game.deckId), loadKit(tools, game.deckId)])
+  // Link each question to the study-kit concept it tests (when the kit exists).
+  const conceptIds = kit?.data.status === 'ready' ? parseJsonArray<string>(kit.data.questionConcepts) : []
   const review: ReviewItem[] = questions.map((q) => ({
     prompt: q.prompt,
     options: parseJsonArray<string>(q.options),
     correctIndex: q.correctIndex,
     explanation: q.explanation,
+    conceptId: conceptIds[q.idx] || undefined,
   }))
   const upd = await tools.update('games', gameId, {
     status: 'finished',
@@ -257,6 +278,7 @@ const deleteDeck = action('deleteDeck', async ({ userId, params, tools, env }) =
     const del = await tools.deleteWhere('questions', { deckId: deck.recordId }, 100)
     if (!del.success || del.data.deleted < 100) break
   }
+  await tools.deleteWhere('kits', { deckId: deck.recordId }, 10)
   await tools.remove('decks', deck.recordId)
   // Media cleanup is best effort; orphaned files are harmless.
   try {
@@ -267,6 +289,43 @@ const deleteDeck = action('deleteDeck', async ({ userId, params, tools, env }) =
     console.warn('[deleteDeck] media cleanup failed', err instanceof Error ? err.message : err)
   }
   return ok({ deleted: true })
+})
+
+const createKit = action('createKit', async ({ userId, params, tools, env }) => {
+  const deck = await loadOwnedDeck(tools, str(params.deckId), userId)
+  if (!deck) return fail('Deck not found')
+  if (deck.data.status !== 'ready') return fail('Wait for the quiz to finish first')
+  const kit = await loadKit(tools, deck.recordId)
+  if (kit?.data.status === 'generating') return ok({ already: true })
+  await upsertKit(tools, deck.recordId, { status: 'generating', statusMessage: 'Queued…' })
+  await enqueueJob(env.JOB_ROOMS, `app:${env.DEEPSPACE_APP_ID}`, 'generate-kit', {
+    deckId: deck.recordId,
+    userId,
+  }, { maxAttempts: 1, enqueuedBy: userId })
+  return ok({ queued: true })
+})
+
+/**
+ * Players read a deck's kit only through this action: the kit is shared
+ * once a game they were in has finished (and with the host, who owns it).
+ */
+const getStudyKit = action('getStudyKit', async ({ userId, params, tools }) => {
+  const game = await loadGame(tools, str(params.gameId))
+  if (!game) return fail('Game not found')
+  if (game.data.hostId !== userId) {
+    const pRes = await tools.query<PlayerRow>('players', { where: { gameId: game.recordId, userId }, limit: 1 })
+    if (!pRes.success || pRes.data.records.length === 0) return fail('Only players in this game can open its study kit')
+    if (game.data.status !== 'finished') return fail('The study kit unlocks when the game ends')
+  }
+  const kit = await loadKit(tools, game.data.deckId)
+  if (!kit || kit.data.status !== 'ready') return fail('This quiz doesn’t have a study kit yet')
+  return ok({
+    title: game.data.title,
+    summary: kit.data.summary,
+    concepts: parseKitField<KitConcept[]>(kit.data.concepts, []),
+    cheatSheet: parseKitField(kit.data.cheatSheet, []),
+    conceptMap: parseKitField(kit.data.conceptMap, { nodes: [], edges: [] }),
+  })
 })
 
 // ── game lifecycle (host) ──────────────────────────────────────────────────
@@ -494,11 +553,16 @@ const getRecap = action('getRecap', async ({ userId, params, tools }) => {
   )
   // Only questions that were actually played (the host may end early).
   const played = review.slice(0, Math.max(0, game.data.currentIndex + 1))
+  const kit = await loadKit(tools, game.data.deckId)
+  const conceptTerms = new Map(
+    parseKitField<KitConcept[]>(kit?.data.concepts, []).map((c) => [c.id, c.term]),
+  )
   const missed: MissedQuestion[] = []
   played.forEach((q, i) => {
     const choice = myAnswers.get(i)
     if (choice === q.correctIndex) return
     missed.push({
+      concept: q.conceptId ? conceptTerms.get(q.conceptId) : undefined,
       prompt: q.prompt,
       yourAnswer: choice === undefined ? null : (q.options[choice] ?? null),
       correctAnswer: q.options[q.correctIndex] ?? '',
@@ -532,6 +596,8 @@ export const actions: Record<string, ActionHandler<Env>> = {
   createDeck,
   retryDeck,
   deleteDeck,
+  createKit,
+  getStudyKit,
   hostGame,
   startGame,
   revealAnswer,

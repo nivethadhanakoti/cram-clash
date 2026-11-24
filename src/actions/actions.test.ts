@@ -17,8 +17,10 @@ vi.mock('deepspace/worker', async (importOriginal) => {
   }
 })
 
+import { enqueueJob } from 'deepspace/worker'
 import { actions } from './index'
 import { schemas } from '../schemas'
+import { buildKitForDeck } from '../server/generate-kit'
 
 // ── in-memory RecordRoom ──────────────────────────────────────────────────
 
@@ -308,5 +310,114 @@ describe('join codes', () => {
     const unknown = await call('joinGame', 'ann', { code: 'ZZZZZZ' })
     expect(unknown.success).toBe(false)
     if (!unknown.success) expect(unknown.error).toMatch(/No game/)
+  })
+})
+
+// ── study kit ──────────────────────────────────────────────────────────────
+
+const KIT_JSON = {
+  summary: 'Cells make energy.',
+  concepts: [
+    { id: 'zero', term: 'Concept Zero', explanation: 'First idea.', example: '' },
+    { id: 'one', term: 'Concept One', explanation: 'Second idea.', example: 'e.g.' },
+  ],
+  cheatSheet: [{ heading: 'Facts', items: ['a = b'] }],
+  conceptMap: { nodes: [{ id: 'zero', label: 'Zero' }, { id: 'one', label: 'One' }], edges: [{ from: 'zero', to: 'one', label: 'leads to' }] },
+  questionConcepts: ['zero', 'one', ''],
+}
+
+async function seedKit(owner: string, deckId: string) {
+  await store.toolsFor(owner).create('kits', {
+    deckId,
+    status: 'ready',
+    statusMessage: '',
+    summary: KIT_JSON.summary,
+    concepts: JSON.stringify([
+      { id: 'concept-zero', term: 'Concept Zero', explanation: 'First idea.', example: '' },
+      { id: 'concept-one', term: 'Concept One', explanation: 'Second idea.', example: '' },
+    ]),
+    cheatSheet: JSON.stringify(KIT_JSON.cheatSheet),
+    conceptMap: JSON.stringify({ nodes: [], edges: [] }),
+    questionConcepts: JSON.stringify(['concept-zero', 'concept-one', '']),
+  })
+}
+
+async function playedGame() {
+  const deckId = await seedDeck('host')
+  await seedKit('host', deckId)
+  const { gameId, code } = expectOk(await call<{ gameId: string; code: string }>('hostGame', 'host', { deckId }))
+  expectOk(await call('joinGame', 'ann', { code }))
+  expectOk(await call('startGame', 'host', { gameId }))
+  return { deckId, gameId }
+}
+
+describe('study kit', () => {
+  it('links each reviewed question to its concept when the game ends', async () => {
+    const { gameId } = await playedGame()
+    expectOk(await call('endGame', 'host', { gameId }))
+    const review = JSON.parse(game(gameId).reviewJson as string)
+    expect(review.map((r: { conceptId?: string }) => r.conceptId)).toEqual(['concept-zero', 'concept-one', undefined])
+  })
+
+  it('opens for players only after the game ends, never for outsiders', async () => {
+    const { gameId } = await playedGame()
+    const early = await call('getStudyKit', 'ann', { gameId })
+    expect(early.success).toBe(false)
+    expectOk(await call('endGame', 'host', { gameId }))
+    expect((await call('getStudyKit', 'bob', { gameId })).success).toBe(false) // never joined
+    const kit = expectOk(await call<{ concepts: Array<{ term: string }>; summary: string }>('getStudyKit', 'ann', { gameId }))
+    expect(kit.summary).toBe('Cells make energy.')
+    expect(kit.concepts.map((c) => c.term)).toEqual(['Concept Zero', 'Concept One'])
+  })
+
+  it('the host can open their own kit mid-game', async () => {
+    const { gameId } = await playedGame()
+    expectOk(await call('getStudyKit', 'host', { gameId }))
+  })
+
+  it('names the missed concept in the recap prompt', async () => {
+    const { gameId } = await playedGame()
+    expectOk(await call('submitAnswer', 'ann', { gameId, questionIndex: 0, choice: 3 })) // wrong
+    expectOk(await call('revealAnswer', 'host', { gameId, questionIndex: 0 }))
+    expectOk(await call('endGame', 'host', { gameId }))
+    expectOk(await call('getRecap', 'ann', { gameId }))
+    expect(JSON.stringify(store.integration.mock.calls.at(-1))).toContain('[Concept: Concept Zero]')
+  })
+
+  it('only the owner can (re)generate a kit, and deleting the deck removes it', async () => {
+    const deckId = await seedDeck('host')
+    expect((await call('createKit', 'ann', { deckId })).success).toBe(false)
+    expectOk(await call('createKit', 'host', { deckId }))
+    const kitRow = [...store.table('kits').values()][0].data
+    expect(kitRow.status).toBe('generating')
+    expect(vi.mocked(enqueueJob).mock.calls.at(-1)?.[2]).toBe('generate-kit')
+    expectOk(await call('deleteDeck', 'host', { deckId }))
+    expect(store.table('kits').size).toBe(0)
+  })
+})
+
+describe('buildKitForDeck', () => {
+  it('writes a validated kit from the model output', async () => {
+    const deckId = await seedDeck('host')
+    store.integration.mockImplementation(async () => ({
+      success: true,
+      data: { content: [{ type: 'text', text: '```json\n' + JSON.stringify(KIT_JSON) + '\n```' }] },
+    }))
+    const res = await buildKitForDeck(store.toolsFor('host'), deckId, { notes: 'notes', title: 'Cells' })
+    expect(res.ok).toBe(true)
+    const kit = [...store.table('kits').values()][0].data
+    expect(kit.status).toBe('ready')
+    expect(JSON.parse(kit.questionConcepts as string)).toEqual(['concept-zero', 'concept-one', ''])
+    const prompt = JSON.stringify(store.integration.mock.calls[0])
+    expect(prompt).toContain('Q0?') // quiz questions are sent for concept mapping
+  })
+
+  it('retries once, then marks the kit failed without throwing', async () => {
+    const deckId = await seedDeck('host')
+    store.integration.mockImplementation(async () => ({ success: true, data: { content: [{ type: 'text', text: 'not json' }] } }))
+    const res = await buildKitForDeck(store.toolsFor('host'), deckId, { notes: 'notes', title: 'Cells' })
+    expect(res.ok).toBe(false)
+    expect(store.integration).toHaveBeenCalledTimes(2)
+    expect([...store.table('kits').values()][0].data.status).toBe('failed')
   })
 })

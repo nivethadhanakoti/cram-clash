@@ -1,6 +1,7 @@
 /**
  * Two-user end-to-end game: A turns notes into a quiz (real Anthropic call),
- * hosts it, B joins by code and answers, A reveals, both see results.
+ * plus its study kit, hosts it, B joins by code and answers, A reveals, both
+ * see results and B can open the study kit.
  *
  * Run with `npx deepspace test run all` (needs two test accounts; see
  * collab.spec.ts for how to create them). Generation calls the real AI
@@ -28,6 +29,10 @@ test('host and player play a round in real time', async ({ users }) => {
   await expect(host.page).toHaveURL(/\/decks\//, { timeout: 30_000 })
   // Ready as soon as questions exist (narration/cover continue in background).
   await expect(host.page.getByTestId('host-game')).toBeVisible({ timeout: 150_000 })
+  // The study kit is written alongside narration; the Study kit tab is the default.
+  await expect(host.page.getByTestId('study-kit')).toBeVisible({ timeout: 150_000 })
+  await expect(host.page.getByTestId('kit-concept').first()).toBeVisible()
+  await host.page.getByTestId('tab-key').click()
   await expect(host.page.getByTestId('question-list').locator('li')).not.toHaveCount(0)
 
   // ── Host: open a lobby ────────────────────────────────────────────────
@@ -62,6 +67,8 @@ test('host and player play a round in real time', async ({ users }) => {
   await expect(host.page.getByTestId('podium')).toBeVisible({ timeout: 15_000 })
   await expect(player.page.getByTestId('podium')).toBeVisible({ timeout: 15_000 })
   await expect(player.page.getByTestId('review-list').locator('li')).toHaveCount(1)
+  // The host's study kit unlocks for the player once the game is over.
+  await expect(player.page.getByTestId('open-kit')).toBeVisible({ timeout: 15_000 })
   await player.page.getByTestId('get-recap').click()
   await expect(player.page.getByTestId('recap-text')).toBeVisible({ timeout: 90_000 })
 })

@@ -6,8 +6,9 @@
  *   2. Anthropic → validated, option-shuffled questions. Fatal on failure.
  *   3. Write question rows (cleared first, so a retried job never duplicates).
  *   4. Mark the deck playable (status ready) immediately.
- *   5. Best-effort extras: ElevenLabs narration per question and Gemini cover
- *      art, uploaded to app-scope storage. A failure here never blocks play.
+ *   5. In parallel, best-effort extras: the study kit (summary, concepts,
+ *      cheat sheet, concept map), ElevenLabs narration per question, and
+ *      Gemini cover art. A failure here never blocks play.
  */
 
 import { appFiles } from 'deepspace/worker'
@@ -16,6 +17,7 @@ import type { Env } from '../../worker'
 import { createActionTools } from './action-routes'
 import { base64ToBlob, generateCover, generateQuiz, narrateQuestion } from './ai'
 import { isDifficulty } from '../lib/game-logic'
+import { buildKitForDeck } from './generate-kit'
 
 export interface GenerateDeckPayload {
   deckId: string
@@ -108,14 +110,16 @@ export async function runGenerateDeck(payload: GenerateDeckPayload, ctx: JobCont
       questionCount: quiz.questions.length,
       status: 'ready',
       progress: 0.6,
-      statusMessage: deck.narrate ? 'Playable now — recording narration…' : 'Playable now — painting cover…',
+      statusMessage: deck.narrate
+        ? 'Playable now — writing study kit and recording narration…'
+        : 'Playable now — writing study kit…',
     })
 
     // ── Best-effort media ──────────────────────────────────────────────
     const files = appFiles(env, { scope: 'app', userId })
     let done = 0
     let audioFailures = 0
-    const mediaTotal = (deck.narrate ? quiz.questions.length : 0) + 1
+    const mediaTotal = (deck.narrate ? quiz.questions.length : 0) + 2 // + cover + kit
 
     const tick = async (label: string) => {
       done++
@@ -123,6 +127,12 @@ export async function runGenerateDeck(payload: GenerateDeckPayload, ctx: JobCont
       ctx.progress(p, label)
       await setDeck({ progress: p })
     }
+
+    const finalTitle = deck.title?.trim() ? deck.title : quiz.title
+    const kitTask = (async () => {
+      await buildKitForDeck(tools, deckId, { notes, title: finalTitle })
+      await tick('Study kit')
+    })()
 
     const coverTask = (async () => {
       try {
@@ -158,7 +168,7 @@ export async function runGenerateDeck(payload: GenerateDeckPayload, ctx: JobCont
         },
       )
     }
-    await coverTask
+    await Promise.all([coverTask, kitTask])
 
     await setDeck({
       progress: 1,

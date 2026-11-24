@@ -9,6 +9,7 @@ import type { CollectionSchema } from 'deepspace/schema'
 import { usersSchema } from './schemas/users-schema'
 import { settingsSchema } from './schemas/admin-schema'
 import { decksSchema, questionsSchema } from './schemas/deck-schema'
+import { kitsSchema } from './schemas/kit-schema'
 import {
   answersSchema,
   gamesSchema,
@@ -21,6 +22,7 @@ export const schemas: CollectionSchema[] = [
   settingsSchema,
   decksSchema,
   questionsSchema,
+  kitsSchema,
   gamesSchema,
   playersSchema,
   answersSchema,

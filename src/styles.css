@@ -267,3 +267,15 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-pop, .animate-rise { animation: none; }
 }
+
+/* ── Printing the cheat sheet: only .print-area, black on white ───── */
+@media print {
+  @page { margin: 14mm; }
+  html, body { background: #fff !important; }
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; color: #111 !important; }
+  .print-area {
+    position: absolute; inset: 0 auto auto 0; width: 100%;
+    border: 0 !important; background: #fff !important; padding: 0 !important; box-shadow: none !important;
+  }
+}

@@ -12,6 +12,7 @@ import {
   type Difficulty,
   type GeneratedQuiz,
 } from '../lib/game-logic'
+import { validateKit, type StudyKit } from '../lib/kit-logic'
 
 export const QUIZ_MODEL = 'claude-haiku-4-5'
 export const TTS_MODEL = 'eleven_flash_v2_5'
@@ -86,7 +87,45 @@ export async function generateQuiz(
   return { ...quiz, questions: quiz.questions.map((q) => shuffleOptions(q)) }
 }
 
+export function kitSystemPrompt(): string {
+  return [
+    'You turn a student’s own notes into a study kit. Use ONLY what is in the notes; never add outside facts.',
+    'Write for a student cramming tonight: plain words, short sentences, concrete.',
+    'Respond with ONLY a JSON object, no prose, in this exact shape:',
+    '{',
+    ' "summary": string — 2 to 4 short paragraphs separated by blank lines, the big picture first,',
+    ' "concepts": [{"id": string (short kebab-case), "term": string, "explanation": string (2–3 sentences, plain language),',
+    '               "example": string (one concrete example or analogy from or consistent with the notes, may be "")}]',
+    '             — the 6 to 12 most important concepts, in the order a student should learn them,',
+    ' "cheatSheet": [{"heading": string, "items": [string]}] — 3 to 6 sections, 3 to 8 items each; dense one-liners:',
+    '             definitions, formulas, numbers, sequences, and "don’t confuse X with Y" pairs,',
+    ' "conceptMap": {"nodes": [{"id": string, "label": string (≤ 4 words)}], "edges": [{"from": id, "to": id, "label": string (≤ 4 words)}]}',
+    '             — 5 to 12 nodes (reuse concept ids where they match) and the relationships between them,',
+    ' "questionConcepts": [string] — for each quiz question below, in order, the id of the ONE concept it tests ("" if none fits)',
+    '}',
+  ].join('\n')
+}
+
+export async function generateKit(
+  tools: ActionTools,
+  input: { notes: string; title: string; questions: Array<{ prompt: string }> },
+): Promise<StudyKit> {
+  const user = [
+    `Topic: ${input.title}`,
+    '',
+    'Quiz questions (map each to a concept id):',
+    ...input.questions.map((q, i) => `${i + 1}. ${q.prompt}`),
+    '',
+    '<notes>',
+    input.notes,
+    '</notes>',
+  ].join('\n')
+  const text = await claude(tools, kitSystemPrompt(), user, 8000)
+  return validateKit(extractJsonObject(text), input.questions.length)
+}
+
 export interface MissedQuestion {
+  concept?: string
   prompt: string
   yourAnswer: string | null
   correctAnswer: string
@@ -110,7 +149,7 @@ export async function generateRecap(
     'You are a warm, direct study coach writing a short personal recap after a quiz game.',
     'Write plain text (no markdown headings, no tables). Use short paragraphs and "- " bullets.',
     'Structure: one sentence on how they did; then "What to review" with one bullet per weak concept',
-    '(group related misses into one concept, explain the correct idea in 1–2 sentences, plainly);',
+    '(group related misses into one concept — use the [Concept: …] names when given — explain the correct idea in 1–2 sentences, plainly);',
     'then "Try this next" with 2 quick self-test prompts on those concepts (no answers).',
     'If they missed nothing, praise briefly and give 2 stretch prompts that go beyond the quiz.',
     'Stay under 220 words. Do not invent facts beyond the questions and explanations given.',
@@ -119,7 +158,7 @@ export async function generateRecap(
     ? input.missed
         .map(
           (m, i) =>
-            `${i + 1}. Q: ${m.prompt}\n   Their answer: ${m.yourAnswer ?? '(no answer — ran out of time)'}\n   Correct: ${m.correctAnswer}\n   Why: ${m.explanation}`,
+            `${i + 1}. ${m.concept ? `[Concept: ${m.concept}] ` : ''}Q: ${m.prompt}\n   Their answer: ${m.yourAnswer ?? '(no answer — ran out of time)'}\n   Correct: ${m.correctAnswer}\n   Why: ${m.explanation}`,
         )
         .join('\n')
     : '(none)'

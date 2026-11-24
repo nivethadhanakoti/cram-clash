@@ -19,7 +19,7 @@ describe('schemas', () => {
 
   it('never let clients write game state or read the answer key', () => {
     const byName = Object.fromEntries(schemas.map((s) => [s.name, s]))
-    for (const name of ['games', 'players', 'answers', 'questions', 'recaps']) {
+    for (const name of ['games', 'players', 'answers', 'questions', 'recaps', 'kits']) {
       for (const role of ['member', 'viewer']) {
         const p = byName[name].permissions[role]
         expect(p.create, `${name}.${role}.create`).toBe(false)
@@ -29,5 +29,6 @@ describe('schemas', () => {
     }
     expect(byName.questions.permissions.member.read).toBe('own')
     expect(byName.answers.permissions.member.read).toBe('own')
+    expect(byName.kits.permissions.member.read).toBe('own')
   })
 })

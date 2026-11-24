@@ -8,6 +8,7 @@ import { callAction } from '@/lib/callAction'
 import { parseJsonArray } from '@/lib/game-logic'
 import { DeckCover, StatusChip } from '@/components/game/DeckCover'
 import { OptionShape, Panel, playClip } from '@/components/game/GameUI'
+import { DeckKit } from '@/components/kit/DeckKit'
 
 interface Deck {
   title: string
@@ -44,6 +45,7 @@ export default function DeckPage() {
   const [seconds, setSeconds] = useState(20)
   const [busy, setBusy] = useState<'' | 'host' | 'retry' | 'delete'>('')
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [tab, setTab] = useState<'kit' | 'key'>('kit')
 
   const deck = decks.records.find((d) => d.recordId === id)
 
@@ -176,7 +178,29 @@ export default function DeckPage() {
           </div>
         </Panel>
 
-        {sorted.length > 0 && (
+        {d.status === 'ready' && (
+          <div role="tablist" aria-label="Deck contents" className="flex w-fit gap-1 rounded-full border border-border bg-card p-1">
+            {([['kit', 'Study kit'], ['key', `Answer key (${sorted.length})`]] as const).map(([id, label]) => (
+              <button
+                key={id}
+                role="tab"
+                aria-selected={tab === id}
+                onClick={() => setTab(id)}
+                data-testid={`tab-${id}`}
+                className={cn(
+                  'rounded-full px-4 py-1.5 text-sm font-semibold transition',
+                  tab === id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {d.status === 'ready' && tab === 'kit' && <DeckKit deckId={id} title={d.title} />}
+
+        {sorted.length > 0 && (tab === 'key' || d.status !== 'ready') && (
           <section>
             <h2 className="mb-1 font-display text-xl font-bold">Answer key</h2>
             <p className="mb-4 text-sm text-muted-foreground">Only you can see this. Players get the questions one at a time, and the answers only after each reveal.</p>

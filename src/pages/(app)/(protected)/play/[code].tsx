@@ -18,6 +18,7 @@ import {
   RotateCcw,
   Sparkles,
   Users,
+  BookOpen,
   Volume2,
   VolumeX,
   Wifi,
@@ -41,6 +42,8 @@ import {
   type BoardPlayer,
   type OptionState,
 } from '@/components/game/GameUI'
+import { useGameKit } from '@/components/kit/useGameKit'
+import { conceptAnchor } from '@/components/kit/StudyKitView'
 
 interface Game {
   code: string
@@ -298,7 +301,7 @@ function HostView({
   }
 
   if (game.status === 'finished') {
-    return <FinalScreen game={game} players={players} />
+    return <FinalScreen game={game} players={players} gameId={gameId} />
   }
 
   const revealed = game.status === 'reveal'
@@ -539,6 +542,10 @@ function FinalScreen({
   const review = parseJsonArray<ReviewItem>(game.reviewJson).slice(0, Math.max(0, game.currentIndex + 1))
   const me = players.find((p) => p.userId === meId)
   const rank = rankPlayers(players).find((p) => p.userId === meId)?.rank
+  // The deck's study kit unlocks for everyone in the game once it ends.
+  const { kit } = useGameKit(gameId)
+  const terms = new Map((kit?.concepts ?? []).map((c) => [c.id, c.term]))
+  const kitHref = `/kit/${game.code}`
   return (
     <div className="space-y-6">
       <Panel className="space-y-6 py-8 text-center">
@@ -555,6 +562,20 @@ function FinalScreen({
 
       <div className="grid gap-5 grid-cols-1 lg:grid-cols-[1fr_1.3fr]">
         <div className="space-y-5">
+          {kit && (
+            <Link
+              to={kitHref}
+              data-testid="open-kit"
+              className="flex items-center gap-4 rounded-3xl bg-primary p-5 text-primary-foreground transition hover:brightness-105"
+            >
+              <BookOpen className="h-8 w-8 shrink-0" />
+              <span className="min-w-0 flex-1">
+                <span className="block font-display text-lg font-extrabold">Open the study kit</span>
+                <span className="block text-sm opacity-80">Summary, key concepts, cheat sheet and concept map for this quiz</span>
+              </span>
+              <ArrowRight className="h-5 w-5 shrink-0" />
+            </Link>
+          )}
           {me && gameId && <RecapCard gameId={gameId} />}
           <Panel>
             <h2 className="mb-3 font-display text-lg font-bold">Everyone</h2>
@@ -587,6 +608,15 @@ function FinalScreen({
                     )}
                   </p>
                   {q.explanation && <p className="mt-1 text-sm text-muted-foreground">{q.explanation}</p>}
+                  {q.conceptId && terms.has(q.conceptId) && (!myChoices || !right) && (
+                    <Link
+                      to={`${kitHref}#${conceptAnchor(q.conceptId)}`}
+                      data-testid="review-concept"
+                      className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                    >
+                      {myChoices ? 'Review' : 'Concept'}: {terms.get(q.conceptId)} <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  )}
                 </li>
               )
             })}
