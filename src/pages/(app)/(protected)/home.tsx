@@ -65,7 +65,7 @@ export default function HomePage() {
     <div className="min-h-full bg-grain">
       <div className="mx-auto max-w-6xl space-y-10 px-5 py-8 sm:py-12">
         <section className="grid gap-5 grid-cols-1 lg:grid-cols-[1.2fr_1fr]">
-          <Panel className="flex flex-col justify-center">
+          <Panel className="flex flex-col justify-center border-2 border-primary/60">
             <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
               {firstName ? `Ready, ${firstName}?` : 'Ready to play?'}
             </h1>
