@@ -13,7 +13,7 @@ export function DeckCover({ url, title, className }: { url?: string; title: stri
   return (
     <div
       aria-hidden
-      className={cn('relative flex aspect-video w-full items-center justify-center overflow-hidden bg-secondary', className)}
+      className={cn('relative flex aspect-video w-full items-center justify-center overflow-hidden', ['bg-opt-0/15', 'bg-opt-1/15', 'bg-opt-2/20', 'bg-opt-3/15'][first], className)}
     >
       <div className="grid grid-cols-2 gap-3 opacity-80">
         {[0, 1, 2, 3].map((i) => (

@@ -6,7 +6,7 @@ import { Button, useToast } from '@/components/ui'
 import { callAction } from '@/lib/callAction'
 import { CODE_LENGTH, normalizeCode } from '@/lib/game-logic'
 import { DeckCover, StatusChip } from '@/components/game/DeckCover'
-import { Panel } from '@/components/game/GameUI'
+import { OptionShape, Panel } from '@/components/game/GameUI'
 
 interface Deck {
   title: string
@@ -79,18 +79,24 @@ export default function HomePage() {
                 autoComplete="off"
                 autoCapitalize="characters"
                 spellCheck={false}
-                className="h-14 w-full min-w-0 flex-1 rounded-2xl border border-input bg-background px-4 text-center font-mono text-xl font-bold uppercase tracking-[0.25em] sm:text-2xl sm:tracking-[0.35em] outline-none placeholder:text-muted-foreground/40 focus:ring-2 focus:ring-ring"
+                className="h-14 w-full min-w-0 flex-1 rounded-2xl border-2 border-input bg-secondary/50 px-4 text-center font-mono text-xl font-bold uppercase tracking-[0.25em] sm:text-2xl sm:tracking-[0.35em] outline-none placeholder:text-muted-foreground/40 focus:ring-2 focus:ring-ring"
               />
-              <Button type="submit" size="lg" className="h-14 rounded-2xl px-8 text-base" disabled={code.length !== CODE_LENGTH || joining}>
+              <Button type="submit" size="lg" className="h-14 rounded-2xl bg-foreground px-8 text-base text-background hover:bg-foreground/90 disabled:opacity-40" disabled={code.length !== CODE_LENGTH || joining}>
                 {joining ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Join <ArrowRight className="ml-1 h-5 w-5" /></>}
               </Button>
             </form>
           </Panel>
 
-          <Panel className="flex flex-col justify-between gap-4 bg-primary text-primary-foreground">
+          <Panel className="relative flex flex-col justify-between gap-4 overflow-hidden border-0 bg-primary text-primary-foreground">
+            <div aria-hidden className="pointer-events-none absolute right-5 top-5 grid grid-cols-2 gap-1.5">
+              <OptionShape index={0} className="h-6 w-6 text-opt-0" />
+              <OptionShape index={1} className="h-6 w-6 text-opt-1" />
+              <OptionShape index={2} className="h-6 w-6 text-[#241a02]" />
+              <OptionShape index={3} className="h-6 w-6 text-opt-3" />
+            </div>
             <div>
-              <h2 className="font-display text-2xl font-extrabold">Host a game</h2>
-              <p className="mt-1 opacity-80">Turn your notes into a quiz in about a minute, then share the code.</p>
+              <h2 className="pr-20 font-display text-2xl font-extrabold">Host a game</h2>
+              <p className="mt-1 pr-14 opacity-80">Turn your notes into a quiz in about a minute, then share the code.</p>
             </div>
             <Link
               to="/decks/new"

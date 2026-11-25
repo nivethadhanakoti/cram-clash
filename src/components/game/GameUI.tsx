@@ -247,7 +247,7 @@ export function QrCode({ value, size = 168 }: { value: string; size?: number }) 
 }
 
 export function Panel({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('rounded-3xl border border-border bg-card p-5 sm:p-6', className)}>{children}</div>
+  return <div className={cn('rounded-3xl border border-border bg-card p-5 shadow-[var(--shadow-card)] sm:p-6', className)}>{children}</div>
 }
 
 /** Plays a narration clip whenever `src` changes, unless muted. */
