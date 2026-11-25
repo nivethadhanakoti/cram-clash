@@ -80,3 +80,47 @@
   --color-opt-2: #ffb020;
   --color-opt-3: #8c7bff;
 }
+
+/* Daylight — CramClash's bright theme (the default): warm paper background,
+ * white cards, ink text, the same marigold and four answer colors.
+ * Marigold is too pale to read as text on white, so text set in the
+ * primary color uses a deeper amber here (see .text-primary below), while
+ * fills and buttons keep the bright marigold. */
+[data-theme="daylight"] {
+  color-scheme: light;
+  --color-background: #fbf6ec;
+  --color-foreground: #1c1828;
+  --color-card: #ffffff;
+  --color-card-foreground: #1c1828;
+  --color-popover: #ffffff;
+  --color-popover-foreground: #1c1828;
+  --color-primary: #ffc23d;
+  --color-primary-foreground: #241a02;
+  --color-secondary: #f3ecdf;
+  --color-secondary-foreground: #1c1828;
+  --color-muted: #f1eadc;
+  --color-muted-foreground: #5f586f;
+  --color-accent: #efe6d6;
+  --color-accent-foreground: #1c1828;
+  --color-destructive: #d23045;
+  --color-destructive-foreground: #ffffff;
+  --color-success: #0d8a5c;
+  --color-success-foreground: #ffffff;
+  --color-warning: #a96400;
+  --color-warning-foreground: #ffffff;
+  --color-border: #e8dfcf;
+  --color-input: #d9ccb6;
+  --color-ring: #e0a100;
+  --radius: 0.9rem;
+  --shadow-card: 0 1px 2px 0 rgba(60, 40, 10, 0.05), 0 8px 24px -16px rgba(60, 40, 10, 0.18);
+  --shadow-card-hover: 0 2px 4px 0 rgba(60, 40, 10, 0.06), 0 14px 32px -16px rgba(60, 40, 10, 0.26);
+  --color-shell: #f6efe2;
+  --color-shell-panel: #ffffff;
+
+  --color-opt-0: #ff6b57;
+  --color-opt-1: #22c3b0;
+  --color-opt-2: #ffb020;
+  --color-opt-3: #8c7bff;
+}
+/* Readable amber for primary-colored TEXT on light surfaces (4.7:1 on white). */
+[data-theme="daylight"] .text-primary { color: #9a5f00; }

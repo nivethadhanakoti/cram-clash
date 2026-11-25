@@ -9,38 +9,40 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { buildMermaid, type StudyKit } from "@/lib/kit-logic";
 
-let mermaidReady: Promise<typeof import("mermaid").default> | null = null;
+let mermaidReady: Promise<typeof import('mermaid').default> | null = null
+
+/** Read a theme color from CSS so the map matches whichever theme is active. */
+function themeColor(name: string, fallback: string) {
+  if (typeof document === 'undefined') return fallback
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback
+}
 
 function loadMermaid() {
-  mermaidReady ??= import("mermaid").then(({ default: mermaid }) => {
+  mermaidReady ??= import('mermaid').then(({ default: mermaid }) => {
+    const dark = document.documentElement.style.colorScheme === 'dark' ||
+      getComputedStyle(document.documentElement).colorScheme === 'dark'
     mermaid.initialize({
       startOnLoad: false,
-      securityLevel: "strict",
-      theme: "base",
+      securityLevel: 'strict',
+      theme: 'base',
       fontFamily: "'Bricolage Grotesque Variable', -apple-system, sans-serif",
       themeVariables: {
-        darkMode: true,
-        background: "#1d1a29",
-        primaryColor: "#2a2539",
-        primaryTextColor: "#f6f0e4",
-        primaryBorderColor: "#ffc93c",
-        lineColor: "#a8a1bd",
-        secondaryColor: "#241f33",
-        tertiaryColor: "#1d1a29",
-        edgeLabelBackground: "#1d1a29",
-        fontSize: "15px",
+        darkMode: dark,
+        background: themeColor('--color-card', '#ffffff'),
+        primaryColor: themeColor('--color-secondary', '#f3ecdf'),
+        primaryTextColor: themeColor('--color-foreground', '#1c1828'),
+        primaryBorderColor: themeColor('--color-ring', '#e0a100'),
+        lineColor: themeColor('--color-muted-foreground', '#5f586f'),
+        secondaryColor: themeColor('--color-muted', '#f1eadc'),
+        tertiaryColor: themeColor('--color-card', '#ffffff'),
+        edgeLabelBackground: themeColor('--color-card', '#ffffff'),
+        fontSize: '15px',
       },
-      flowchart: {
-        curve: "basis",
-        padding: 14,
-        nodeSpacing: 36,
-        rankSpacing: 48,
-        useMaxWidth: false,
-      },
-    });
-    return mermaid;
-  });
-  return mermaidReady;
+      flowchart: { curve: 'basis', padding: 14, nodeSpacing: 36, rankSpacing: 48, useMaxWidth: false },
+    })
+    return mermaid
+  })
+  return mermaidReady
 }
 
 export function ConceptMap({ map }: { map: StudyKit["conceptMap"] }) {

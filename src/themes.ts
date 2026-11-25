@@ -18,6 +18,11 @@
 
 export const THEMES = [
   {
+    id: 'daylight',
+    label: 'Daylight',
+    description: 'CramClash default: warm paper, ink text, marigold and four answer colors.',
+  },
+  {
     id: 'arcade',
     label: 'Arcade',
     description: 'CramClash theme: cream on plum-black with marigold and four answer colors.',

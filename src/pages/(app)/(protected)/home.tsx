@@ -65,7 +65,7 @@ export default function HomePage() {
     <div className="min-h-full bg-grain">
       <div className="mx-auto max-w-6xl space-y-10 px-5 py-8 sm:py-12">
         <section className="grid gap-5 grid-cols-1 lg:grid-cols-[1.2fr_1fr]">
-          <Panel className="flex flex-col justify-center border-2 border-primary/60">
+          <Panel className="flex flex-col justify-center border-2 border-primary">
             <h1 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
               {firstName ? `Ready, ${firstName}?` : 'Ready to play?'}
             </h1>
@@ -94,7 +94,7 @@ export default function HomePage() {
             </div>
             <Link
               to="/decks/new"
-              className="inline-flex w-fit items-center gap-2 rounded-full bg-primary-foreground px-5 py-2.5 font-semibold text-primary transition hover:opacity-90"
+              className="inline-flex w-fit items-center gap-2 rounded-full bg-[#241a02] px-5 py-2.5 font-semibold text-[#ffc93c] transition hover:opacity-90"
             >
               <Plus className="h-4 w-4" /> New quiz from notes
             </Link>
