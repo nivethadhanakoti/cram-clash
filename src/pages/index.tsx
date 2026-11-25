@@ -3,12 +3,14 @@
  * Keep it renderable without a browser: no window/Date/random during render.
  */
 
-import { Link } from 'react-router-dom'
-import { ArrowRight, FileText, Headphones, Sparkles, Trophy, Users } from 'lucide-react'
+import { useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { ArrowRight, FileText, Headphones, Sparkles, Ticket, Trophy, Users } from 'lucide-react'
 import { Seo } from '../components/Seo'
 import { BrandMark } from '../components/Navigation'
 import { OptionShape } from '../components/game/GameUI'
 import { seo } from '../seo'
+import { CODE_LENGTH, normalizeCode } from '../lib/game-logic'
 
 /** Example subjects shown as illustrated cards in the hero. Decorative. */
 const SUBJECTS = [
@@ -60,6 +62,49 @@ function SubjectCard({ s, i }: { s: (typeof SUBJECTS)[number]; i: number }) {
   )
 }
 
+/**
+ * "Got a code?" — sends players straight to /play/CODE. The game page
+ * handles sign-in and joins them automatically, so this needs no server
+ * call here (the landing page stays static and prerendered).
+ */
+function JoinCode() {
+  const navigate = useNavigate()
+  const [code, setCode] = useState('')
+  const ready = code.length === CODE_LENGTH
+  function submit(e: FormEvent) {
+    e.preventDefault()
+    if (ready) navigate(`/play/${code}`)
+  }
+  return (
+    <form
+      id="join"
+      onSubmit={submit}
+      data-testid="landing-join"
+      className="mt-3 flex max-w-xl items-center gap-2 rounded-full border border-white/15 bg-white/10 p-1.5 pl-4 backdrop-blur focus-within:border-white/40"
+    >
+      <Ticket className="h-4 w-4 shrink-0 text-[#ffc23d]" />
+      <span className="hidden shrink-0 text-sm font-semibold text-white/80 sm:inline">Got a code?</span>
+      <input
+        value={code}
+        onChange={(e) => setCode(normalizeCode(e.target.value))}
+        placeholder="ABC123"
+        aria-label="Game code"
+        autoComplete="off"
+        autoCapitalize="characters"
+        spellCheck={false}
+        className="h-10 w-full min-w-0 flex-1 bg-transparent font-mono text-lg font-bold uppercase tracking-[0.25em] text-white outline-none placeholder:text-white/30"
+      />
+      <button
+        type="submit"
+        disabled={!ready}
+        className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-[#ff6b57] px-4 text-sm font-bold text-white transition hover:brightness-105 disabled:opacity-40 sm:px-5"
+      >
+        Join game <ArrowRight className="h-4 w-4" />
+      </button>
+    </form>
+  )
+}
+
 export default function Landing() {
   return (
     <>
@@ -71,9 +116,9 @@ export default function Landing() {
             CramClash
           </Link>
           <span className="flex-1" />
-          <Link to="/home" className="hidden whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground sm:inline-flex">
+          <a href="#join" className="hidden whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground sm:inline-flex">
             I have a code
-          </Link>
+          </a>
           <Link to="/home" className="whitespace-nowrap rounded-full bg-foreground px-4 py-2 text-sm font-semibold text-background transition hover:opacity-90">
             Sign in
           </Link>
@@ -117,6 +162,8 @@ export default function Landing() {
                     Make my quiz <ArrowRight className="h-4 w-4" />
                   </span>
                 </Link>
+
+                <JoinCode />
 
                 <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-white/75" aria-label="Highlights">
                   {FEATURES.map((f) => (
