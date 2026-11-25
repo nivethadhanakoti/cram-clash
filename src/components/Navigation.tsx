@@ -58,8 +58,8 @@ export default function Navigation() {
         to={item.path}
         aria-current={active ? 'page' : undefined}
         className={cn(
-          'px-3 py-1.5 text-sm',
-          active ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+          'rounded-full px-4 py-2 text-sm font-semibold transition-colors',
+          active ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground',
         )}
       >
         {item.label}
@@ -69,14 +69,14 @@ export default function Navigation() {
 
   return (
     <>
-      <nav data-testid="app-navigation" className="border-b border-border bg-background/80 backdrop-blur">
-        <div className="mx-auto flex h-12 max-w-7xl items-center gap-4 px-4">
-          <Link to="/home" className="flex items-center gap-2 font-display text-base font-extrabold tracking-tight text-foreground">
-            <BrandMark />
+      <nav data-testid="app-navigation" className="sticky top-0 z-30 border-b border-border/70 bg-background/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:gap-4 sm:px-6">
+          <Link to="/home" className="flex min-w-0 items-center gap-2 font-display text-lg font-extrabold tracking-tight text-foreground sm:text-xl">
+            <BrandMark className="h-6 w-6 shrink-0 sm:h-7 sm:w-7" />
             {APP_NAME}
           </Link>
 
-          <div className="hidden items-center md:flex">{visibleNav.map(navLink)}</div>
+          <div className="hidden items-center gap-0.5 rounded-full border border-border bg-card p-1 shadow-[var(--shadow-card)] md:flex">{visibleNav.map(navLink)}</div>
 
           <div className="flex-1" />
 
@@ -93,9 +93,9 @@ export default function Navigation() {
                 render={
                   <button
                     aria-label="Account menu"
-                    className="group flex items-center gap-2 rounded-full border border-border bg-card/60 py-1 pl-1 pr-2.5 text-sm transition-colors hover:bg-card"
+                    className="group flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pl-1.5 pr-3 text-sm font-semibold shadow-[var(--shadow-card)] transition-colors hover:bg-secondary"
                   >
-                    <Avatar className="h-6 w-6 ring-1 ring-inset ring-border">
+                    <Avatar className="h-7 w-7 ring-1 ring-inset ring-border">
                       <AvatarImage src={user.imageUrl ?? undefined} referrerPolicy="no-referrer" />
                       <AvatarFallback className="text-[11px]">
                         {(user.name?.[0] ?? user.email?.[0] ?? '?').toUpperCase()}
@@ -137,7 +137,7 @@ export default function Navigation() {
             <button
               data-testid="nav-sign-in-button"
               onClick={() => setShowAuthModal(true)}
-              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90"
+              className="rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background hover:opacity-90"
             >
               Sign in
             </button>
@@ -154,7 +154,7 @@ export default function Navigation() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="flex flex-col border-t border-border px-2 py-2 md:hidden">
+          <div className="flex flex-col gap-1 border-t border-border px-3 py-3 md:hidden">
             {visibleNav.map(navLink)}
           </div>
         )}
